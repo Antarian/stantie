@@ -1,0 +1,13 @@
+series:
+  - slug: basic-principles
+    title: 'Basic principles'
+    pretext: 'Few basic principles to help you write a more maintainable code.'
+    parts: 3
+  - slug: algorithms-basics
+    title: 'Algorithms basics'
+    pretext: 'In this series I will try to explain basic algorithms often used in programming as simple as possible and with practical examples.'
+    parts: 1
+  - slug: creating-a-php-mini-framework
+    title: 'Creating a PHP mini framework'
+    pretext: ''
+    parts: 4

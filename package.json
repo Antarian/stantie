@@ -1,0 +1,14 @@
+{
+  "name": "antarian-stantie",
+  "version": "1.0.0",
+  "description": "static website generator",
+  "main": "index.php",
+  "repository": "https://github.com/antarian/stantie",
+  "author": "Peter Labos",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.10",
+    "tailwindcss": "^3.3.1"
+  }
+}

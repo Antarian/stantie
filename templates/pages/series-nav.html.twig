@@ -1,0 +1,10 @@
+{% if (seriesNav) %}
+    <div class="flex justify-between">
+    {% if (seriesNav.previousArticle) %}
+        <p><sub><a class="hover:no-underline" href="{{ seriesNav.previousArticle.filePath }}">&laquo; {{ seriesNav.previousArticle.title }} (Part {{ article.seriesPart - 1 }})</a></sub></p>
+    {% endif %}
+    {% if (seriesNav.nextArticle) %}
+        <p><sub><a class="hover:no-underline" href="{{ seriesNav.nextArticle.filePath }}">{{ seriesNav.nextArticle.title }}  (Part {{ article.seriesPart + 1 }}) &raquo;</a></sub></p>
+    {% endif %}
+    </div>
+{% endif %}

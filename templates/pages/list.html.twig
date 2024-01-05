@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Blog{% if (seriesDetails) %} - Series: {{ seriesDetails.title }}{% elseif (category) %} - Category: {{ category.title }}{% endif %}{% endblock %}
+
+{% block content %}
+    <main class="container mx-auto grid lg:grid-cols-[minmax(0,_1fr)_25%] max-w-7xl">
+        <div class="lg:border-r lg:border-gray-200 px-12 py-8">
+            <h1 class="text-2xl font-bold leading-9 text-sky-500 mb-4">Blog</h1>
+            {% if (seriesDetails or category) %}<h2 class="text-xl font-bold leading-9 text-sky-500 mb-3">{% if (seriesDetails) %}Series: {{ seriesDetails.title }}{% elseif (category) %}Category: {{ category.title }}{% endif %}</h2>{% endif %}
+            {% if (seriesDetails.pretext) %}
+                <p class="leading-7">{{ seriesDetails.pretext }}</p>
+            {% endif %}
+            {% for article in articleList %}
+                <article class="flex flex-col gap-6 py-12 px-8 border-b border-gray-200">
+                    <h1 class="text-2xl font-bold underline underline-offset-[9px] leading-9 text-sky-500 hover:no-underline">
+                        <a href="{{ article.filePath }}">{{ article.title }}{% if article.archived %} (archived){% endif %}</a>
+                    </h1>
+                    <div class="flex gap-6">
+{#                        <span>By <a href="about-me.html" class="#}
+{#                            underline underline-offset-2#}
+{#                            hover:no-underline#}
+{#                            ">{{ article.author }}</a></span>#}
+                        <span>Posted on <em>{{ article.published|date('jS F, Y') }}</em></span>
+                    </div>
+                    {#<img src="" alt="Decorative image for article">#}
+                    {% if (article.preview) %}
+                        <p class="leading-7">
+                            <a href="{{ article.filePath }}">{{ article.preview }}</a>
+                        </p>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+        <div class="px-12 py-8">
+            {% include 'pages/aside-section.html.twig' with {'title': 'Categories', 'items': categories } %}
+            {% include 'pages/aside-section.html.twig' with {'title': 'Series', 'items': series } %}
+            {% include 'pages/aside-section.html.twig' with {'title': 'Recent articles', 'items': recentArticles } %}
+            {% include 'pages/aside-section.html.twig' with {'title': 'Archived', 'items': archivedArticles } %}
+        </div>
+    </main>
+{% endblock %}

@@ -1,0 +1,11 @@
+categories:
+  - slug: 'principles'
+    title: 'Principles'
+  - slug: 'architecture'
+    title: 'Architecture'
+  - slug: 'math'
+    title: 'Math'
+  - slug: 'quick-wins'
+    title: 'Quick Wins'
+  - slug: 'php-for-beginners'
+    title: 'PHP for beginners'

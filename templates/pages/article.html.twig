@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+    <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+        {% if article.archived %}
+            <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+        {% endif %}
+        <div class="flex justify-between">
+            {% if article.series %}<p><sub>Series: <a class="hover:no-underline underline-offset-4" href="{{ article.series.filePath }}">{{ article.series.title }}</a></sub></p>{% endif %}
+            {% if article.category %}<p><sub>Category: <a class="hover:no-underline underline-offset-4" href="{{ article.category.filePath }}">{{ article.category.title }}</a></sub></p>{% endif %}
+        </div>
+        {% include 'pages/series-nav.html.twig' %}
+        {{ article.content|raw }}
+        <div class="flex gap-6">
+            {#                        <span>By <a href="about-me.html" class="#}
+            {#                            underline underline-offset-2#}
+            {#                            hover:no-underline#}
+            {#                            ">{{ article.author }}</a></span>#}
+            <span>Posted on <em>{{ article.published|date('jS F, Y') }}</em></span>
+        </div>
+        {% include 'pages/series-nav.html.twig' %}
+    </main>
+{% endblock %}

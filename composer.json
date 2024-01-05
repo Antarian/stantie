@@ -1,0 +1,29 @@
+{
+    "name": "antarian/stantie",
+    "description": "Static HTML generator",
+    "type": "project",
+    "require-dev": {
+        "ext-dom": "*",
+        "league/commonmark": "^2.4",
+        "twig/twig": "^3.0",
+        "symfony/finder": "^7.0",
+        "symfony/yaml": "^7.0",
+        "webmozart/assert": "^1.11",
+        "php-di/php-di": "^7.0",
+        "phpunit/phpunit": "^10.5"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Antarian\\Stantie\\": "src/",
+            "Antarian\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Peter Labos",
+            "email": "peter.labos@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
