@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MiniFW - Basic setup | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                    <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+                <div class="flex justify-between">
+            <p><sub>Series: <a class="hover:no-underline underline-offset-4" href="series-creating-a-php-mini-framework.html">Creating a PHP mini framework</a></sub></p>            <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-php-for-beginners.html">PHP for beginners</a></sub></p>        </div>
+            <div class="flex justify-between">
+                <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-2-adding-debug.html">MiniFW - Adding debug  (Part 2) &raquo;</a></sub></p>
+        </div>
+        <h1>Creating a PHP mini framework</h1>
+<p>If you're using some big framework (Symfony, Zend, CakePHP, Nette etc.) together with GitHub, to show some of your work, it is great. It’s good for showing how you write the code, documentation and handle other things.</p>
+<p>But it can be complicated for some small working example. Because people on the other side must use the same framework too and install it somehow, to see your code in action. Some of the frameworks can have really complicated setup and install.</p>
+<p>This inspired me to create some small custom FW. And also to learn more behind the basics of large frameworks.</p>
+<p>MiniFW FW <em>must have</em> basics:</p>
+<ul>
+<li>PHP5 &gt;= 5.3.0 (namespaces and functions)</li>
+<li>environments</li>
+<li>modules and layered architecture</li>
+<li>autoloading of classes</li>
+<li>routing with '404 page'</li>
+<li>debug, logs</li>
+</ul>
+<p>MiniFW FW <em>nice to have</em> attributes:</p>
+<ul>
+<li>simple ACL</li>
+<li>database access</li>
+<li>template system</li>
+</ul>
+<p>I hope you have some environment (LAMP, WAMP) to develop in. I am using AMP with Ubuntu Linux. It’s not in scope of this tutorial to set up a PHP environment.</p>
+<h2>Basic setup</h2>
+<p>Create some base folder at server for work, for me, it is <code>/var/www/minifw</code> and URL for it is <a href="http://localhost/">http://localhost/</a>.</p>
+<p>We will create at this folder file <code>.htaccess</code>. It is Apache config file.</p>
+<pre><code class="language-apacheconf"># .htaccess
+
+# setup environment between development/production
+# comment line or change &quot;development&quot; to &quot;production&quot; on production server
+SetEnv APPLICATION_ENV development
+
+# if mod_rewrite exists use rules
+&lt;IfModule mod_rewrite.c&gt;
+    # set parameter to detect mod rewrite in PHP
+    SetEnv APPLICATION_REWRITE enabled
+
+    # turn on rewrite
+    RewriteEngine On
+    # for all relative path are taken as basement /
+    RewriteBase /
+
+    # if path is index.php do not change it and do not process further
+    RewriteRule ^index\.php$ - [L]
+
+    # if request is not real file
+    RewriteCond %{REQUEST_FILENAME} !-f
+    # and if request is not real directory
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # then change request to index.php in path / and do not process further
+    RewriteRule . /index.php [L]
+&lt;/IfModule&gt;
+</code></pre>
+<p>I think comments explain everything in this file. It is used to redirect every request to one PHP file, which is <code>index.php</code>. Then we process every request and change it to something meaningful.</p>
+<p>In same folder as <code>.htaccess</code> we create file <code>index.php</code> and define some constants for whole application.</p>
+<pre><code class="language-php">&lt;?php 
+/* index.php */
+
+// define location of index.php as BASEDIR constant for easier manipulation with files
+defined('BASEDIR') || define(&quot;BASEDIR&quot;, dirname(__FILE__));
+
+// for using directory separator you must have installed Directories - PHP file system related extensions
+// if you don't have it installed, replace DIRECTORY_SEPARATOR by &quot;/&quot; for Linux or &quot;\\&quot; for Windows
+defined('DIRSEP') || define(&quot;DIRSEP&quot;, DIRECTORY_SEPARATOR);
+</code></pre>
+<p>We will need also one function which will make our life with PHP namespaces easier.</p>
+<pre><code class="language-php">// autoload classes through autoload function
+spl_autoload_register( function($class) {
+  // convert namespace to the full file path
+  $class = BASEDIR . DIRSEP . str_replace('\\', DIRSEP, $class) . '.php';
+  try
+  {
+    // check if the file exists
+    if (!file_exists($class))
+    {
+      throw new RuntimeException($class . ' file does not exist.');
+    } else
+    {
+      require_once($class);
+    }
+  } catch(\Exception $e)
+  {
+    // handle the error
+    echo $e-&gt;getMessage();
+  }
+});
+</code></pre>
+<p>This function is class autoloader. It converts class name with namespace, one to one, to folder structure with class named file.</p>
+<p>As last for this part of tutorial we add to the <code>index.php</code> two other constants.</p>
+<pre><code class="language-php">// define application environment constant value from .htaccess or production otherwise
+defined('APPLICATION_ENV') || define('APPLICATION_ENV',
+  (getenv('APPLICATION_ENV') ? getenv('APPLICATION_ENV') : DebugConfig::PROD_ENV));
+// load debug settings
+DebugConfig::load();
+
+// define if application uses apache mod_rewrite
+$mod_rewrite = (getenv('APPLICATION_REWRITE') ? true : false);
+$mod_rewrite = (!$mod_rewrite &amp;&amp; in_array('mod_rewrite', apache_get_modules()) ? true : false);
+defined('APPLICATION_REWRITE') || define('APPLICATION_REWRITE',
+  ($mod_rewrite ? RouterConfig::MODRW_ENBL : RouterConfig::MODRW_DIS));
+</code></pre>
+<p>Here we set environment and detect mod rewrite for router from <code>.htaccess</code> file. We will create <code>DebugConfig</code> and <code>RouterConfig</code> in next parts of this tutorial.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>22nd March, 2016</em></span>
+        </div>
+            <div class="flex justify-between">
+                <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-2-adding-debug.html">MiniFW - Adding debug  (Part 2) &raquo;</a></sub></p>
+        </div>
+    </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Ionic 4/Angular deployment to AWS | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                    <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+                <div class="flex justify-between">
+                        <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-quick-wins.html">Quick Wins</a></sub></p>        </div>
+                <h1>Ionic 4/Angular deployment to AWS</h1>
+<p>This is a step-by-step tutorial how to manage code deployment from GitHub to AWS for your Ionic 4 AngularJS PWA.</p>
+<p>For this tutorial, you will need AWS and GitHub accounts.</p>
+<h2>Step #1 - Required project changes</h2>
+<p>We will use the new sample Ionic 4 app. But these steps are applicable to any Ionic 4 project.</p>
+<p>Install Ionic 4 app</p>
+<pre><code class="language-shell">npm install -g ionic
+ionic start ionicawscicd tabs
+</code></pre>
+<p>Run the app</p>
+<pre><code class="language-shell">cd ionicawscicd
+ionic serve
+</code></pre>
+<p>This command will show you where your app is running. Usually it is <a href="http://localhost:8100">http://localhost:8100</a></p>
+<p>In a root folder of your Ionic 4 project put the file <code>buildspec.yml</code> defined by rules of AWS CodeBuild with this content:</p>
+<pre><code class="language-yaml">version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12
+    pre_build:
+      commands:
+        - yarn install
+    build:
+      commands:
+        - npm run build:prod
+    artifacts:
+      files:
+        - '**/*'
+    base-directory: www
+</code></pre>
+<p>Explanation of phases</p>
+<ul>
+<li>
+<strong>install</strong> - NodeJS as runtime environment, as we are building Ionic 4/Angular 8 project</li>
+<li>
+<strong>pre-build</strong> - yarn install to get all required dependencies for build</li>
+<li>
+<strong>build</strong> - npm running build command, which is pointing to our <code>package.json</code> file</li>
+</ul>
+<p>Explanation of artifacts</p>
+<ul>
+<li>
+<strong>files</strong> - types of files the build pipeline should use</li>
+<li>
+<strong>base-directory</strong> - directory where build files can be found</li>
+</ul>
+<p>We will also alter <code>package.json</code> file to contain changes relevant for build</p>
+<pre><code class="language-json">{
+  &quot;scripts&quot;: {
+    ...,
+    &quot;build:prod&quot;: &quot;./node_modules/.bin/ionic build --prod&quot;
+  },
+    ...,
+  &quot;dependencies&quot;: {
+    ...
+    &quot;ionic&quot;: &quot;^4.0.0&quot;,
+    ...
+  }
+}
+</code></pre>
+<p>Explanation: <code>build:prod</code> is pointing to local Ionic CLI, which is added to <code>dependencies</code>.</p>
+<h2>Step #2 - Creating GitHub project</h2>
+<p>Log to your GitHub account [https://github.com/login[(https://github.com/login) and create a new public repository named <code>ionicawscicd</code>.</p>
+<p><a href="/">image mising</a></p>
+<p><a href="/">image mising</a></p>
+<p>From result save SSH or HTTPS link:</p>
+<p><a href="/">image mising</a></p>
+<p>You can now go to your project folder on your disk and setup it for git.</p>
+<pre><code class="language-shell">git init
+git add .
+git commit -m&quot;project first commit&quot;
+</code></pre>
+<p>This step will be a little different for everyone. It depends on the name of your repository, and if you already set up an SSH key for GitHub. You can use the SSH link of the repository like me or https.</p>
+<pre><code class="language-shell">git remote add origin git@github.com:Antarian/ionicawscicd.git
+git push -u origin master
+</code></pre>
+<p>Now if you refresh GitHub page (mine is <a href="https://github.com/Antarian/ionicawscicd">https://github.com/Antarian/ionicawscicd</a>) you should see Ionic project codebase</p>
+<p><a href="/">image mising</a></p>
+<h2>Step #3 - Creating AWS S3 bucket</h2>
+<p>Go to your AWS console account and access Amazon S3 home page. <a href="https://console.aws.amazon.com/s3/home">Amazon S3</a> and start creating new bucket by clicking button <code>+ Create bucket</code></p>
+<p><a href="/">image mising</a></p>
+<p>Enter DNS compliant bucket name and select region. I will name it <code>ionicawscicd</code> and my closest region is EU (London).</p>
+<p><a href="/">image mising</a></p>
+<p>Let all other steps on default for now. We may change them later.</p>
+<p>Your bucket should be now created.</p>
+<p><a href="/">image mising</a></p>
+<p>and we can continue to next step.</p>
+<h2>Step #4 - Creating CodePipeline</h2>
+<p>On the page <a href="https://console.aws.amazon.com/codesuite/codepipeline/pipelines">https://console.aws.amazon.com/codesuite/codepipeline/pipelines</a> change region in the right top corner to the one where you are deploying app. Mine is <code>EU London</code>.</p>
+<p><a href="/">image mising</a></p>
+<p>Next click the button <code>Create pipeline</code>.</p>
+<p><a href="/">image mising</a></p>
+<p>I named the pipeline <code>ionicawscicd-pipeline</code> and click button <code>next</code>.</p>
+<p><a href="/">image mising</a></p>
+<p>As a source select <code>GitHub</code> and then click connect button. If you were logout, then login to GitHub again in the window provided by AWS CodePipeline. Select your <code>ionicawscicd</code> repository and branch <code>master</code>.</p>
+<p><a href="/">image mising</a></p>
+<p>As a build provider select AWS CodeBuild and click <code>Create project</code> button.</p>
+<p>Name it <code>ionicawscicd-build</code> Select <code>Managed image</code>, <code>Operating system Ubuntu</code>, runtime <code>Standard</code>,</p>
+<p>'Image standard:3.0' this is the image version and always uses the latest. 'Environment type' is 'Linux'.</p>
+<p>Check 'New service role' and using of 'BuildSpec' file.</p>
+<p><a href="/">image mising</a></p>
+<p><a href="/">image mising</a></p>
+<p><a href="/">image mising</a></p>
+<p><a href="/">image mising</a></p>
+<p>Select Amazon S3 and our earlier created S3 bucket.
+<a href="/">image mising</a></p>
+<h2>Step #5 - Publishing website with CloudFront</h2>
+<p>On <a href="https://console.aws.amazon.com/cloudfront/home">https://console.aws.amazon.com/cloudfront/home</a> we will create new distribution.</p>
+<p><a href="/">image mising</a></p>
+<p>Select the web</p>
+<p><a href="/">image mising</a></p>
+<p>As 'origin domain name' select our 'S3 bucket' domain. Should be something similar to <code>ionicawscicd.s3.amazonaws.com</code>.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>12th August, 2019</em></span>
+        </div>
+            </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>

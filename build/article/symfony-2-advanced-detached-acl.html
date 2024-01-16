@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Symfony 2 advanced/detached ACL | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                    <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+                <div class="flex justify-between">
+                        <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-architecture.html">Architecture</a></sub></p>        </div>
+                <h1>Symfony 2 advanced/detached ACL</h1>
+<p>In Symfony 2 you can use advanced/detached ACL (access control layer). It’s really fast and I think well engineered. Many people use or try to use ACL tightly coupled with code. This is done not only in the Symfony framework.</p>
+<p>You can imagine simple coupled ACL as bodyguard in club asking a person:</p>
+<ul>
+<li>B: Who you are?</li>
+<li>P: I am the owner of the club.</li>
+<li>B: OK, you can go in.</li>
+</ul>
+<p>Advanced/detached ACL:</p>
+<ul>
+<li>B: This is Club 1 (<code>object identity</code>), access with Club 1 VIP card (<code>security identity</code>) only.</li>
+<li>P: I am the owner of the club.</li>
+<li>B: I don't care, do you have a Club 1 VIP card?</li>
+<li>P: Not with me.</li>
+<li>B: OK, not going (<code>access control entry</code>) in.</li>
+</ul>
+<p>Using simple coupled ACL in lists/datasets for in SQL filtering is the most common thing in web development. This implementation brings some positive, but many negative things.</p>
+<p>Positive:</p>
+<ul>
+<li>admin/superadmin can control almost whole application flow without additional code or changing ACL</li>
+<li>less tables in database for ACL</li>
+<li>quicker and easier for CRUD or MVP(minimum viable product) application type</li>
+</ul>
+<p>Negative:</p>
+<ul>
+<li>SQL queries are coupled with ACL and there is no distinction between creator (DB column) and owner (ACL view, edit, delete rights)</li>
+<li>more complicated use of database abstract layer</li>
+<li>code is polluted with access rules beyond the app layer</li>
+<li>code is not reusable in another part of the system</li>
+<li>possible conflicting situations in ACL filtering</li>
+<li>more difficult if not impossible testing without creating fake user</li>
+<li>functional tests require user mocks as ACL is hard to disable</li>
+</ul>
+<p>Real life example:
+Imagine a list of attendees to Math course with full names only. Math teacher can have rights to see an attendee list, but have no rights to view attendee details.</p>
+<p>You can now say:</p>
+<ul>
+<li>I want math teacher to still see a list of attendees, but also access their full details, but only for Math course.</li>
+</ul>
+<p>With tightly coupled ACL, I can ask:</p>
+<ul>
+<li>Do you want to promote him to &quot;course manager&quot;? But he will have access to change all courses.</li>
+<li>or add him a role of &quot;office assistant&quot;? He will see attendee details, but in any course.</li>
+<li>or we will hard-wire new rule to the code for teachers with access to course</li>
+</ul>
+<p>With detached ACL:</p>
+<ul>
+<li>we add new <code>object identity</code> for our <code>Course</code> object, this should be already there</li>
+<li>we add <code>security identity</code> for our <code>teacher</code> role or maybe only for <code>user</code>, this also should already be there</li>
+<li>we add new <code>ACE</code> (access control entry) rule in the <code>acl_entries</code> table to pair security identity, object identity and action, eg. <code>view-course-attendees-details</code>
+</li>
+<li>we add <code>ACE</code> check over the <code>viewCourseAttendeesDetails()</code> method in <code>Course</code> class, if it is not already there</li>
+</ul>
+<p>Detached ACL is more work to implement at the start, but it is easier to add things or list rules later. It is also solving the complexity of larger ACLs.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>17th March, 2016</em></span>
+        </div>
+            </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>

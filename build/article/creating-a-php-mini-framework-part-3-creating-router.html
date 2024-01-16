@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MiniFW - Creating router | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                    <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+                <div class="flex justify-between">
+            <p><sub>Series: <a class="hover:no-underline underline-offset-4" href="series-creating-a-php-mini-framework.html">Creating a PHP mini framework</a></sub></p>            <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-php-for-beginners.html">PHP for beginners</a></sub></p>        </div>
+            <div class="flex justify-between">
+            <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-2-adding-debug.html">&laquo; MiniFW - Adding debug (Part 2)</a></sub></p>
+                <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-4-processing-routes.html">MiniFW - Processing routes  (Part 4) &raquo;</a></sub></p>
+        </div>
+        <h1>Creating a PHP mini framework (part 3)</h1>
+<h2>Creating router</h2>
+<p>In this part of the tutorial, we will create a router for our FW. But first create needed config class. In folder <code>AntarianMiniFW/Router</code> create file <code>RouterConfig.php</code>, with this content.</p>
+<pre><code class="language-php">&lt;?php
+namespace AntarianMiniFW\Router;
+
+class RouterConfig
+{
+    const MODRW_ENBL = 'enabled';
+    const MODRW_DIS = 'disabled';
+
+    /**
+     * safer call of methods and functions
+     *
+     * @param $callback
+     * @param array $params
+     * @return mixed
+     */
+    public static function safeCallUserFuncArray($callback, $params = array())
+    {
+        if (empty($params))
+            $params = array();
+
+        // check if callback is valid
+        if (!is_callable($callback))
+            throw new \InvalidArgumentException(&quot;Callback param is invalid&quot;);
+
+        // check required parameters
+        if (is_array($callback))
+            $r = new \ReflectionMethod($callback[0], $callback[1]);
+        else
+            $r = new \ReflectionFunction($callback);
+
+        if ($r-&gt;getNumberOfRequiredParameters() &gt; count($params))
+            throw new \InvalidArgumentException(&quot;Missing required parameter(s)&quot;);
+
+        return call_user_func_array($callback, $params);
+    }
+}
+</code></pre>
+<p>This method is used to call methods throughout the FW. It checks if callback is valid and if the number of required parameters matches.</p>
+<p>We also create <code>RegexRouter</code> class. This is simple, but powerful router. We check URI string with regular expressions, and if match is found, we get the response from specific classes and methods. In folder <code>AntarianMiniFW/Router</code> create file <code>RegexRouter.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace AntarianMiniFW\Router;
+
+class RegexRouter
+{
+</code></pre>
+<p>We create <code>route()</code> method, which fill <code>routes</code> property array with pattern and assigned callback.</p>
+<pre><code class="language-php">    private $routes = array();
+
+    /**
+     * create routes, array of pattern -&gt; callback pairs for routing
+     *
+     * @param $pattern
+     * @param $callback
+     */
+    public function route($pattern, $callback)
+    {
+        $this-&gt;routes[$pattern] = $callback;
+    }
+</code></pre>
+<p>Now we will add <code>execute()</code> method. This will execute assigned callback when URI and route pattern match.</p>
+<pre><code class="language-php">    /**
+     * executes first matched route in the array
+     *
+     * @param $uri
+     * @return mixed
+     */
+    public function execute($uri)
+    {
+        foreach ($this-&gt;routes as $pattern =&gt; $callback) {
+            // get the route pattern, check it with uri
+            if (preg_match($pattern, $uri, $params) === 1) {
+                // call callback defined in route with selected parameters
+                array_shift($params);
+                return RouterConfig::safeCallUserFuncArray($callback, array_values($params));
+            }
+        }
+    }
+</code></pre>
+<p>As this is the last method in this class, we can close the class.</p>
+<pre><code class="language-php">    }
+</code></pre>
+<p>Now we get back to <code>index.php</code> and put at the end of the file some routing configuration.</p>
+<p>First, we initialize router</p>
+<pre><code class="language-php">// create regex router
+$router = new RegexRouter();
+</code></pre>
+<p>Then we add some route definitions. These routes will be executed when match is found and are applicable if <code>mod_rewrite</code> is active. That mean nice URLs.</p>
+<pre><code class="language-php">    // define some routes - order is important (FIFO method)
+
+    // routes with mod_rewrite enabled
+
+    // for every route of type /module/controller/action/ and everything after is /param_name/param_value/param...
+    $router-&gt;route('/^\/(\w+)\/(\w+)\/(\w+)\/?(.*)\/?$/', function ($module, $controller, $action, $params) {{'{'}}
+        RouteManager::mvcProcess($module, $controller, $action, $params);
+    });
+    // route for homepage
+    $router-&gt;route('/^\/$/', function () {
+        RouteManager::mvcProcess(&quot;main&quot;, &quot;main&quot;, &quot;homepage&quot;, null);
+    });
+</code></pre>
+<p>Here are other route definitions. If <code>mod_rewrite</code> is not active, then these URLs work similar to definitions before.</p>
+<pre><code class="language-php">    // routes with mod_rewrite disabled
+
+    // for every route of type ?module=&amp;controller=&amp;action= and everything after is &amp;param_name=...
+    $router-&gt;route('/^\/?index\.php(\?module\=[^&amp;]+)(\&amp;controller\=[^&amp;]+)(\&amp;action\=[^&amp;]+)(([\&amp;]{1}[^=]+\=[^&amp;]+)*)$/', function ($module, $controller, $action, $params) {
+        RouteManager::mvcProcessOld($module, $controller, $action, $params);
+    });
+    // route for homepage
+    $router-&gt;route('/^(\/?index\.php)*$/', function () {
+        RouteManager::mvcProcessOld(&quot;main&quot;, &quot;main&quot;, &quot;homepage&quot;, null);
+    });
+
+    // for every other route return 404
+    $router-&gt;route('/(.*)/', function() { 
+        RouteManager::errorPage($_SERVER['REQUEST_URI'], 404, 'Page not found.');
+    });
+</code></pre>
+<p>After route definitions, we execute browser URI request to server.</p>
+<pre><code class="language-php">    // execute router with uri as parameter
+    $router-&gt;execute($_SERVER['REQUEST_URI']);
+</code></pre>
+<p>To make this work without an error, we add three other use statements to the top of the <code>index.php</code></p>
+<pre><code class="language-php">use AntarianMiniFW\Router\RouterConfig;
+use AntarianMiniFW\Router\RegexRouter;
+use AntarianMiniFW\Router\RouteManager;
+</code></pre>
+<p>To finish router, we need <code>RouteManager</code> class. We create this class in the next part of the tutorial.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>29th March, 2016</em></span>
+        </div>
+            <div class="flex justify-between">
+            <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-2-adding-debug.html">&laquo; MiniFW - Adding debug (Part 2)</a></sub></p>
+                <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-4-processing-routes.html">MiniFW - Processing routes  (Part 4) &raquo;</a></sub></p>
+        </div>
+    </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>
