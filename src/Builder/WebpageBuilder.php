@@ -4,6 +4,7 @@ namespace Antarian\Stantie\Builder;
 
 use Antarian\Stantie\Model\Article;
 use Antarian\Stantie\Model\Category;
+use Antarian\Stantie\Model\Factory\SeriesNavFactory;
 use Antarian\Stantie\Model\Series;
 use Antarian\Stantie\Model\SeriesNav;
 use Twig\Environment;
@@ -25,6 +26,7 @@ final class WebpageBuilder
     public function __construct(
         private Environment $twig,
         private ContentBuilder $contentBuilder,
+        private SeriesNavFactory $seriesNavFactory,
         private string $targetPath,
     ) {
         $this->categories = $this->contentBuilder->getCategoryList();
@@ -157,7 +159,7 @@ final class WebpageBuilder
                 $nextArticle = $this->contentBuilder->getArticlesInSeries($seriesDetails->slug, $article->seriesPart + 1);
             }
 
-            return new SeriesNav(
+            return $this->seriesNavFactory->create(
                 previousArticle: $previousArticle,
                 nextArticle: $nextArticle,
             );

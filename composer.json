@@ -8,9 +8,10 @@
         "twig/twig": "^3.0",
         "symfony/finder": "^7.0",
         "symfony/yaml": "^7.0",
-        "webmozart/assert": "^1.11",
         "php-di/php-di": "^7.0",
-        "phpunit/phpunit": "^10.5"
+        "phpunit/phpunit": "^10.5",
+        "fakerphp/faker": "^1.23",
+        "symfony/validator": "^7.0"
     },
     "license": "MIT",
     "autoload": {
