@@ -2,25 +2,27 @@
 PHP-based static blog generator
 
 This is a very opinionated static blog generator.
+
 I am using a Twig template system here together with YamlFrontMatter Markdown files for articles.
 
-Templates are read from [templates\pages](templates\pages) directory, data from [data](data) directory and then converted to static html in
-[build](build) directory.
+Templates are read from [templates\pages](templates\pages) directory, data from [data](data) directory and then
+converted to static html in [build](build) directory.
 
-Dependencies of the project are intentionally placed to `require-dev` as the project is not meant to run on any production server.
-This may affect your IDE to complain about using dependencies outside of tests.
+Dependencies of the project are intentionally placed to `require-dev` as the project is not meant to run on any
+production server. This may affect your IDE to complain about using dependencies outside of tests.
 
 ### Install, run and publish
 First install dependencies with composer
 ```shell
 composer install
 ```
-then run project to gnerate files
+then run project to generate files
 ```shell
 php public/index.php
 ```
 and generate styles
 ```shell
+npm install
 npx tailwindcss -i ./public/styles/input.css -o ./build/styles.css --watch
 ```
 
