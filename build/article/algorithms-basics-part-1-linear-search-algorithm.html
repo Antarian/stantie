@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Linear search algorithm (in PHP) | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                <div class="flex justify-between">
+            <p><sub>Series: <a class="hover:no-underline underline-offset-4" href="series-algorithms-basics.html">Algorithms basics</a></sub></p>            <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-math.html">Math</a></sub></p>        </div>
+            <div class="flex justify-between">
+            </div>
+        <h1>Linear search algorithm (in PHP)</h1>
+<p>This is definition from <a href="https://en.wikipedia.org/wiki/Linear_search">Wikipedia page</a>.</p>
+<blockquote>
+<p>A linear search sequentially checks each element of the list until it finds an element that matches the target value. If the algorithm reaches the end of the list, the search terminates unsuccessfully.</p>
+</blockquote>
+<p>If you are not math person, your brain will probably stop working after words <code>linear</code> and <code>sequentially</code>.
+Meaning:
+<code>Linear</code> - arranged along a straight line
+<code>Sequentially</code> - in a way that follows a particular order, ex. one-by-one</p>
+<p>In simpler words, if we want to find 1 item in the list of items, we will check each one of them until we find it. This is simple and quick if you searching something in your shopping list of 10 items. But imagine to find one word in your favourite book. As words are not ordered linear search will take long time.</p>
+<p>PHP functions like <code>in_array()</code> or <code>array_search()</code> are using <code>linear search</code>. This is because PHP arrays can contain multiple types of data by design (int, string, float, array, bool, object) and it is not possible to sort them without user defined preferences.</p>
+<p>Because PHP has no native default implementation of binary search, it is relying on other technologies to search in larger data sets, like SQL, ElasticSearch or custom user defined binary search functions.</p>
+<h2>Basic algorithm</h2>
+<p>From Wikipedia</p>
+<blockquote>
+<p>Given a list L of n elements with values or records L<sub>0</sub> .... L<sub>n−1</sub>, and target value T, the following subroutine uses linear search to find the index of the target T in L.</p>
+<ol>
+<li>Set i to 0.</li>
+<li>If L<sub>i</sub> = T, the search terminates successfully; return i.</li>
+<li>Increase i by 1.</li>
+<li>If i &lt; n, go to step 2. Otherwise, the search terminates unsuccessfully.</li>
+</ol>
+</blockquote>
+<p>If we have <code>10 items (list)</code>, we will compare them one-by-one to <code>searched item (target)</code> and also check for every item if we reached end of the list.</p>
+<p>Yes, that sounds tedious and at least in PHP and C that is exactly what <code>for</code> loop is doing. <code>for</code> loop will check condition after every pass.</p>
+<p>Raw and crude implementation of this in PHP may look like this:</p>
+<pre><code class="language-php">&lt;?php
+$target = 'U';
+$list = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'];
+$n = 10;
+for ($i = 0; $i &lt; $n, $i++) {
+    if ($list[$i] === $target) {
+        die($i);
+    }
+}
+die('Not found');
+</code></pre>
+<h2>With a sentinel</h2>
+<p>From Wikipedia:</p>
+<blockquote>
+<p>The basic algorithm above makes two comparisons per iteration: one to check if L<sub>i</sub> equals T, and the other to check if i still points to a valid index of the list. By adding an extra record L<sub>n</sub> to the list (a sentinel value) that equals the target, the second comparison can be eliminated until the end of the search, making the algorithm faster. The search will reach the sentinel if the target is not contained within the list.</p>
+<ol>
+<li>Set i to 0.</li>
+<li>If L<sub>i</sub> = T, go to step 4.</li>
+<li>Increase i by 1 and go to step 2.</li>
+<li>If i &lt; n, the search terminates successfully; return i. Else, the search terminates unsuccessfully.</li>
+</ol>
+</blockquote>
+<p>We improve previous style with removing of check on every step. We then add item we search on the end of the array. If returned index is same as the end one, item is not in the array.</p>
+<p>In PHP this means to change our <code>for</code> loop to <code>foreach</code>.</p>
+<p>Raw and crude implementation of this in PHP may look like this:</p>
+<pre><code class="language-php">$target = 'A';
+$list = ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P']; 
+array_push($list, $target); // target added to end of array
+$n = 10;
+$found = null;
+foreach ($arr as $i =&gt; $item) {
+    if ($item === $target) {
+        $found = $i;
+        break;
+    }
+}
+if ($n === $found)
+    die('Not found');
+
+die($found);
+</code></pre>
+<h2>In an ordered table</h2>
+<p>From Wikipedia:</p>
+<blockquote>
+<p>If the list is ordered such that L0 ≤ L1 ... ≤ Ln−1, the search can establish the absence of the target more quickly by concluding the search once Li exceeds the target. This variation requires a sentinel that is greater than the target.</p>
+<ol>
+<li>Set i to 0.</li>
+<li>If L<sub>i</sub> ≥ T, go to step 4.</li>
+<li>Increase i by 1 and go to step 2.</li>
+<li>If L<sub>i</sub> = T, the search terminates successfully; return i. Else, the search terminates unsuccessfully.</li>
+</ol>
+</blockquote>
+<p>Ordering array before search will add time to algorithm. If you need to order the array only because of search, then it is better to use <a href="binary-search.html">binary search</a>.</p>
+<p>Raw and crude implementation of this in PHP may look like this:</p>
+<pre><code class="language-php">$target = 'A';
+$list = ['E', 'I', 'O', 'P', 'Q', 'R', 'T', 'U', 'W', 'Y']; // alphabetically ordered list 
+$n = 10;
+$found = null;
+foreach ($arr as $i =&gt; $item) {
+    if (strcmp($item, $target) &gt;= 0) { // compare strings by alphabet
+        if ($item == $target) {
+            die($i);
+        }
+        die('Not found');
+    }
+}
+</code></pre>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>13th January, 2024</em></span>
+        </div>
+            <div class="flex justify-between">
+            </div>
+    </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>

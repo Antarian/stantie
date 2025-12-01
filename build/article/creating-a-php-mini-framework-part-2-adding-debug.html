@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MiniFW - Adding debug | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                    <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+                <div class="flex justify-between">
+            <p><sub>Series: <a class="hover:no-underline underline-offset-4" href="series-creating-a-php-mini-framework.html">Creating a PHP mini framework</a></sub></p>            <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-php-for-beginners.html">PHP for beginners</a></sub></p>        </div>
+            <div class="flex justify-between">
+            <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-1-basic-setup.html">&laquo; MiniFW - Basic setup (Part 1)</a></sub></p>
+                <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-3-creating-router.html">MiniFW - Creating router  (Part 3) &raquo;</a></sub></p>
+        </div>
+        <h1>Creating a PHP mini framework (part 2)</h1>
+<h2>Adding debug</h2>
+<p>As I mentioned in first part of this tutorial, we will now create <code>DebugConfig</code> class. In base folder of the project create folder structure <code>AntarianMiniFW\Debug</code>. Within <code>Debug</code> folder create file <code>DebugConfig.php</code> and place this content into it.</p>
+<pre><code class="language-php">&lt;?php
+/* \AntarianMiniFW\Debug\DebugConfig.php */
+namespace AntarianMiniFW\Debug;
+
+/**
+ * basic debug configuration class
+ */
+class DebugConfig
+{
+    const DEV_ENV = 'development';
+    const PROD_ENV = 'production';
+
+    public static function load()
+    {
+        // in development enable error report for better error detection
+        if (APPLICATION_ENV == self::DEV_ENV) {
+            ini_set('display_errors', 1);
+            ini_set('display_startup_errors', 1);
+            error_reporting(-1);
+        }
+
+       // setup exception error handler to change errors to exceptions
+       set_error_handler(array('\AntarianMiniFW\Debug\Debug', 'exceptionErrorHandler'));
+
+       // exception handler to uncaught exceptions
+       set_exception_handler(array('\AntarianMiniFW\Debug\Debug', 'exceptionHandler'));
+  }
+}
+</code></pre>
+<p>This class has namespace definition which is one-to-one to folder structure. And name of class is same as filename without <code>.php</code> part. There are also two constants, which we will use through the FW. There is <code>load()</code> method, which will change error level detection settings based on environment type. This method also setup callbacks for converting errors to exceptions and for handling uncaught exceptions.</p>
+<p>To reach this class, we use autoload function in <code>index.php</code>.</p>
+<p>Now we open the <code>index.php</code> file and add <code>use namespace</code> statement to the top of the file, just after the <code>&lt;?php</code>.</p>
+<pre><code class="language-php">use AntarianMiniFW\Debug\DebugConfig;
+</code></pre>
+<p>Next we create <code>Debug.php</code> file in <code>AntarianMiniFW/Debug</code> folder. Place this code to the start of the file.</p>
+<pre><code class="language-php">&lt;?php
+/* \AntarianMiniFW\Debug\Debug.php */
+namespace AntarianMiniFW\Debug;
+
+class Debug
+{
+</code></pre>
+<p>First in this file, we create method <code>exceptionErrorHandler()</code> which will change PHP error messages into exceptions.</p>
+<pre><code class="language-php">/**
+ * method to change error to exception, for better use in try/catch
+ *
+ * @param $severity
+ * @param $message
+ * @param $file
+ * @param $line
+ * @throws \ErrorException
+ */
+public static function exceptionErrorHandler($severity, $message, $file, $line)
+{
+    if (!(error_reporting() &amp; $severity)) {
+        // This error code is not included in error_reporting
+        return;
+    }
+
+    throw new \ErrorException($message, 0, $severity, $file, $line);
+}
+</code></pre>
+<p>Second, we create a method to handle uncaught exceptions.</p>
+<pre><code class="language-php">/**
+ * handler for uncaught exceptions
+ *
+ * @param $exception \Exception
+ */
+public static function exceptionHandler(\Exception $exception)
+{
+    // if dev environment display error on screen
+    if (APPLICATION_ENV == DebugConfig::DEV_ENV)
+        print(Debug::generateCallTrace($exception));
+    }
+}
+</code></pre>
+<p>This method calling <code>generateCallTrace()</code> method, in which we show details of exception.</p>
+<pre><code class="language-php">/**
+ * adding more description to exceptions
+ *
+ * @param \Exception $e
+ * @return string
+ */
+public static function generateCallTrace(\Exception $e)
+{
+    $result[] =
+      &quot;Msg: &quot; . $e-&gt;getMessage() . PHP_EOL .
+      &quot;File: &quot; . $e-&gt;getFile() . &quot; (&quot; . $e-&gt;getLine() . &quot;)&quot; . PHP_EOL .
+      &quot;Backtrace: &quot;;
+
+    $result[] = print_r($e-&gt;getTraceAsString(), true);
+
+    $result = implode(PHP_EOL, $result);
+
+    // not development, then output goes to log file
+    if (APPLICATION_ENV != DebugConfig::DEV_ENV)
+      return $result;
+
+    // html output to screen
+    return nl2br($result);
+}
+</code></pre>
+<p>As this is last method in our Debug class, we should close class with</p>
+<pre><code class="language-php">}
+</code></pre>
+<p>As we now have classes for handling errors, we can change a little our <code>spl_autoload_register</code> function in <code>index.php</code>. We add print debug into <code>catch</code> part.</p>
+<pre><code class="language-php">// autoload classes through autoload function
+spl_autoload_register( function($class) {
+      ...
+    } catch(\Exception $e) {
+        // if dev environment display error on screen
+        if (APPLICATION_ENV == DebugConfig::DEV_ENV)
+            print(Debug::generateCallTrace($e));
+    }
+});
+</code></pre>
+<p>and add 'use statement' to the top of the file</p>
+<pre><code class="language-php">use AntarianMiniFW\Debug\Debug;
+</code></pre>
+<p>In the next part of our tutorial, we will create router classes for our mini framework.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>27th March, 2016</em></span>
+        </div>
+            <div class="flex justify-between">
+            <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-1-basic-setup.html">&laquo; MiniFW - Basic setup (Part 1)</a></sub></p>
+                <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-3-creating-router.html">MiniFW - Creating router  (Part 3) &raquo;</a></sub></p>
+        </div>
+    </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>

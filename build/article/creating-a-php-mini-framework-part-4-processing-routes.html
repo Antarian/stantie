@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/stantie/build/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MiniFW - Processing routes | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="hidden sm:block pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                    <div class="border-b-2 border-amber-300 bg-amber-100 flex justify-center align-middle">
+                <p>This article was archived and may no longer be relevant.</p>
+            </div>
+                <div class="flex justify-between">
+            <p><sub>Series: <a class="hover:no-underline underline-offset-4" href="series-creating-a-php-mini-framework.html">Creating a PHP mini framework</a></sub></p>            <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-php-for-beginners.html">PHP for beginners</a></sub></p>        </div>
+            <div class="flex justify-between">
+            <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-3-creating-router.html">&laquo; MiniFW - Creating router (Part 3)</a></sub></p>
+            </div>
+        <h1>Creating a PHP mini framework (part 4)</h1>
+<h2>Processing routes</h2>
+<p>In the previous part of this tutorial, we made our first steps in creating router and attached classes. Now we create <code>RouteManager</code> class, and first absolute basic module.</p>
+<p>In <code>AntarianMiniFW/Router</code> folder we create file <code>RouteManager.php</code> with starting lines.</p>
+<pre><code class="language-php">&lt;?php
+namespace AntarianMiniFW\Router;
+
+use AntarianMiniFW\Debug\Debug;
+use AntarianMiniFW\Debug\DebugConfig;
+
+class RouteManager
+{
+</code></pre>
+<p>The first method we create is for handling 404 error page.</p>
+<pre><code class="language-php">    /**
+     * creates error page with the message if in development
+     *
+     * @param $uri
+     * @param $code
+     * @param $message
+     */
+    public static function errorPage($uri, $code, $message)
+    {
+        if ($code == '404') {
+            header(&quot;Location: http://&quot; . $uri);
+            header('HTTP/1.0 404 Not Found');
+            echo &quot;&amp;lt;h1&amp;gt;404 Not Found&amp;lt;/h1&amp;gt;&quot;;
+            echo &quot;&amp;lt;p&amp;gt;&quot;.$message.&quot;&amp;lt;/p&amp;gt;&quot;;
+            exit();
+        }
+    }
+</code></pre>
+<p>Next are the methods to control assigning of URL parameters to a specific class and method. One for nice URLs.</p>
+<pre><code class="language-php">    /**
+     * Convert nice URL to call target controller and method in specified module
+     *
+     * @param $module
+     * @param $controller
+     * @param $action
+     * @param $params
+     */
+    public static function mvcProcess($module, $controller, $action, $params)
+    {
+        // must be a fully qualified namespace with class for dynamic names, because of PHP compilation order
+        // php.net/manual/en/language.namespaces.dynamic.php
+        $controller = ucfirst($module) . &quot;\\Controller\\&quot; . ucfirst($controller) . &quot;Controller&quot;;
+
+        // create method name from second parameter
+        $action = $action . &quot;Action&quot;;
+
+        // explode params to array
+        if (!empty($params))
+            $params = explode('/', $params);
+
+        // instantiate object and call defined method
+        $controllerObject = new $controller();
+
+        try {
+            // call method ($action) in class ($controllerObject) with selected parameters ($params)
+            RouterConfig::safeCallUserFuncArray(array($controllerObject, $action), $params);
+        } catch(\ErrorException $e) {
+            // if dev environment display error on screen
+            if (APPLICATION_ENV == DebugConfig::DEV_ENV)
+                print(Debug::generateCallTrace($e));
+            else
+            // handle the error
+            RouteManager::errorPage($_SERVER['REQUEST_URI'], 404, '');
+        }
+    }
+</code></pre>
+<p>And the second one for classic URLs.</p>
+<pre><code class="language-php">    /**
+     * Convert classic URL to call target controller and method in specified module
+     *
+     * @param $module
+     * @param $controller
+     * @param $action
+     * @param $params
+     */
+    public static function mvcProcessOld($module, $controller, $action, $params)
+    {
+        // must be a fully qualified namespace with class for dynamic names, because of PHP compilation order
+        // php.net/manual/en/language.namespaces.dynamic.php
+        $module = ucfirst( str_replace(&quot;?module=&quot;, &quot;&quot;, $module) );
+        $controller = ucfirst( str_replace(&quot;&amp;controller=&quot;, &quot;&quot;, $controller) );
+        $controller = $module . &quot;\\Controller\\&quot; . $controller . &quot;Controller&quot;;
+
+        // create method name from second parameter
+        $action = str_replace(&quot;&amp;action=&quot;, &quot;&quot;, $action);
+        $action = $action . &quot;Action&quot;;
+
+        // explode params to array
+        if (!empty($params)) {
+            $params = explode('&amp;', $params);
+            unset($params[0]);
+            $params = array_map(function($item) {
+                if (!empty($item))
+                    return substr($item, strpos($item, '=')+1);
+            }, $params);
+        }
+
+        // instantiate object and call defined method
+        $controllerObject = new $controller();
+
+        try {
+            // call method ($action) in class ($controllerObject) with selected parameters ($params)
+            RouterConfig::safeCallUserFuncArray(array($controllerObject, $action), $params);
+        } catch(\ErrorException $e) {
+            // if dev environment display error on screen
+            if (APPLICATION_ENV == DebugConfig::DEV_ENV)
+                print(Debug::generateCallTrace($e));
+            else
+                // handle the error
+                RouteManager::errorPage($_SERVER['REQUEST_URI'], 404, '');
+            }
+        }
+</code></pre>
+<p>And not to forget to close the class.</p>
+<pre><code class="language-php">}
+</code></pre>
+<p>We have the basics of our MiniFW FW for development. For some presentation of functionality, we will create one very basic module. In folder where we have <code>index.php</code> we create folder structure Main\Controller. In this folder we create <code>MainController.php</code> file. Here we place class with one method.</p>
+<pre><code class="language-php">&lt;?php
+namespace Main\Controller;
+
+class MainController
+{
+    public function homepageAction()
+    {
+        echo &quot;&amp;lt;h1&amp;gt;MiniFW FW welcomes you&amp;lt;/h1&amp;gt;&quot;;
+    }
+}
+</code></pre>
+<p>We can see this welcome sentence, when we look at <a href="http://localhost">http://localhost</a> in browser or whatever your local URL is. If we go by first URL check, this content will be available on <a href="http://localhost/main/main/homepage">http://localhost/main/main/homepage</a> URL. From the must-have basics of our FW we are still missing the Log. This we will create in the next parts of the tutorial.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>29th March, 2016</em></span>
+        </div>
+            <div class="flex justify-between">
+            <p><sub><a class="hover:no-underline" href="article/creating-a-php-mini-framework-part-3-creating-router.html">&laquo; MiniFW - Creating router (Part 3)</a></sub></p>
+            </div>
+    </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>
