@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Domain Driven Design in PHP | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="sm:block max-sm:pt-2 pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                <div class="flex justify-between">
+            <p><sub>Series: <a class="hover:no-underline underline-offset-4" href="series-domain-driven-design.html">Domain Driven Design in PHP</a></sub></p>            <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-architecture.html">Architecture</a></sub></p>        </div>
+            <div class="flex justify-between">
+            </div>
+        <h1>Domain Driven Design in PHP</h1>
+<h2>Intro</h2>
+<p>When I was first looking into <abbr title="Domain Driven Design">DDD</abbr> few years ago, there was plenty of information floating around. Almost nothing was for PHP, articles were about Java mostly. I was trying to wrap my thoughts around it, to know where and how all of that theory should help. How the practical application looks like? Naming things like business does, having all the core logic in domain. I would say that many articles were trying to be smarter than they needed to be. They focused on communication between technical and non-technical people, from which many senior devs are shielded by tech leads, product owners or customer support, which may be more skilled in technical aspects than usual customers.</p>
+<p>Yes, going through all the specs and processes with business is big part of the DDD process, naming things clearly and the same way business is naming them also. But for many programmers, it is hard to switch to that without knowing what expected code structure should be or can be.</p>
+<p>In this article I will try to approach DDD from the software developer point of view and with some very simple examples of code using <abbr title="Model Driven Design">MDD</abbr> along the way. I will avoid <abbr title="Command and Query Responsibility Segregation">CQRS</abbr> or <abbr title="Event Sourcing">ES</abbr> in this basic approach from the start. Even those two patterns are usual addition to MDD. There will be no framework used and data layer will be just some in-memory structure.</p>
+<p>It would be good to know PHP, Composer (PHP package/library manager) also basics of <abbr title="Object Oriented Programming">OOP</abbr> and at least <abbr title="Model-View-Controller">MVC</abbr> design pattern for you to continue comfortably with reading this article. Knowing general and OOP principles like YAGNI, KISS, DRY and SOLID are not required, but I will be mentioning them now and then.</p>
+<h2>Model Driven Design (Model Driven Architecture)</h2>
+<p>MDD is often used as basic code design part of DDD. If you'll follow along, we will implement architecture visible on this diagram:</p>
+<p><img src="/public/img/ddd-diagram.svg" alt="Model Driven Design diagram" /></p>
+<div style="width:100%;text-align:right;"><sub>Credit to: <a target="_blank" href="https://khalilstemmler.com/articles/domain-driven-design-intro/">https://khalilstemmler.com/articles/domain-driven-design-intro/</a></sub></div>
+<p>We will use simple example of Shopping List app to get most basic and understandable implementation of this diagram. We will slowly increment Shopping List app to tackle more complex things later in this tutorial.</p>
+<h3>When MDD may not be the best fit</h3>
+<p>To save you time reading, there are situations where MDD may not be the best fit for your needs. At least not in PHP.</p>
+<ol>
+<li>When you batch process data, e.g. if you load, change, filter, save or convert data in large amounts. You should look for framework commands run from command line and cron-jobs.</li>
+<li>When you mostly read data and/or structure for reading data is changing way too often. Or if speed is preferred on reading, you may avoid using MDD queries.</li>
+<li>When you are not solving complex business process, but need technical application layer solution. Like caching, user authentication, etc.</li>
+</ol>
+<p>I said &quot;may not be&quot;, because as with any architecture, you need to decide about cons and pros of your solution(s). As for example you may need to tackle complex user registration process in financial institution with DDD or just use (in)build framework/library solution.</p>
+<h2>Layered Architecture</h2>
+<p><img src="/public/img/layered-architecture.svg" alt="MDD isolate domain with Layered Architecture&quot;" />
+In MDD, domain is isolated by Commands. These commands can be called by app controllers or commands (CLI). To make any changes in domain, you need to use predefined Commands. These commands will be processed by CommandHandlers. Practical example of the command:</p>
+<p><code>domain/Command/AddShoppingList.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\Command;
+
+final readonly class AddShoppingList
+{
+    public function __construct(
+        public string $title,
+    ) {}
+}
+</code></pre>
+<p>As you can see, command is a very simple class providing basic data we need to create Shopping List. Commands should be readonly DTOs with public properties. It may help you, if you think of them as API endpoints, or just to be able to populate them from json object.</p>
+<p>These command will be processed by command handlers. In our case</p>
+<p><code>domain/CommandHandler/AddShoppingListHandler.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\CommandHandler;
+
+use Domain\Command\AddShoppingList;
+
+final readonly class AddShoppingListHandler
+{
+    public function __invoke(AddShoppingList $command): void
+    {
+        // create entity (model)
+
+        // store entity
+    }
+}
+</code></pre>
+<p>Invoke method should use command to create entity and to store the entity.</p>
+<p>Command and CommandHandler are the place to implement &quot;application business rules&quot;. They may be also referred to as &quot;user actions&quot; or even &quot;user paths&quot;.</p>
+<p>We currently don't have an entity, and we don't have a way to store the entity also.
+This is our next logical step.</p>
+<h2>Entities</h2>
+<p><img src="/public/img/entities.svg" alt="MDD express model with Entities encapsulate with Factories" />
+Entities (Models) are main actor of Model Driven design. They contain core domain logic and store the current state of the domain. Entity also need to have a unique identifier. To satisfy condition that every Entity has unique id, we will use simple nullable integer <code>id</code> for now.</p>
+<p>Let's create our first Entity</p>
+<p><code>domain/Entity/ShoppingList.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\Entity;
+
+class ShoppingList
+{
+    public function __construct(
+        private ?int $id,
+        private string $title,
+    ) {}
+}
+</code></pre>
+<p>Yes, that's it. At least for now. It is a very simple entity. Entities are the place where we implement &quot;enterprise business rules&quot;. This rules may be as simple as storing &quot;created&quot; date, to more complex like awaiting some approvals and sending notifications.</p>
+<p>Now back to our command handler</p>
+<p><code>domain/CommandHandler/AddShoppingListHandler.php</code></p>
+<pre><code class="language-php">    public function __invoke(AddShoppingList $command): void
+    {
+        // create entity (model)
+        $entity = new ShoppingList(null, $command-&gt;title);
+    }
+</code></pre>
+<p>Ehh... if you know OOP principles, this does not look right. We should avoid constructing new class inside of class. Should we pass model here as a dependency in constructor? As every entity (model) has specific ID which is known only during the code runtime, that is also not a way to go.</p>
+<p>You may use <code>new</code> keyword for DTOs and data model objects. But following Single responsibility principle, there should be only one place where we will be doing this. We need Entity Factory. Factory will help us with Entity encapsulation, as only point of creating (or populating) entity.</p>
+<p><code>domain/Factory/ShoppingListFactory.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\Factory;
+
+use Domain\Entity\ShoppingList;
+
+class ShoppingListFactory 
+{
+    public function createShoppingList(string $title): ShoppingList
+    {
+        return new ShoppingList(null, $title);
+    }
+}
+</code></pre>
+<p>Now we update our handler to use it</p>
+<p><code>domain/CommandHandler/AddShoppingListHandler.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\CommandHandler;
+
+use Domain\Command\AddShoppingList;
+use Domain\Factory\ShoppingListFactory;
+
+final readonly class AddShoppingListHandler
+{
+    public function __construct(
+        private ShoppingListFactory $factory,
+    ) {}
+
+    public function __invoke(AddShoppingList $command): void
+    {
+        // create entity
+        $entity = $this-&gt;factory-&gt;createShoppingList($command-&gt;title);
+
+        // store entity
+    }
+}
+</code></pre>
+<p>In the next part we will handle how to store an Entity</p>
+<h2>Repositories</h2>
+<p><img src="/public/img/repositories.svg" alt="Entities access with Repositories" />
+Our ShoppingList Entity is now created and populated with data. We want to store those data. MDD does not really care how or where we store the entity. It just expects that state of the domain entity will be properly stored and possible to retrieve. As this is Data layer of our architecture and MDD is not really caring about it, we need some contract between these two layers. Internal code contracts are defined by interfaces. Let's create one</p>
+<p><code>domain/Repository/ShoppingListRepository.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\Repository;
+
+use Domain\Entity\ShoppingList;
+
+interface ShoppingListRepository
+{
+    public function store(ShoppingList $entity): void;
+}
+</code></pre>
+<p>Any class handling our ShoppingList data will need to implement this interface. We will inject that class into our command handler. But as we do not know which class it will be, we will nicely follow Dependency inversion principle here and inject this interface in our handler. And also update <code>__invoke()</code> method.</p>
+<p><code>domain/CommandHandler/AddShoppingListHandler.php</code></p>
+<pre><code class="language-php">&lt;?php
+namespace Domain\CommandHandler;
+
+use Domain\Command\AddShoppingList;
+use Domain\Factory\ShoppingListFactory;
+use Domain\Repository\ShoppingListRepository;
+
+final readonly class AddShoppingListHandler
+{
+    public function __construct(
+        private ShoppingListFactory $factory,
+        private ShoppingListRepository $repository,
+    ) {}
+
+    public function __invoke(AddShoppingList $command): void
+    {
+        // create entity (model)
+        $entity = $this-&gt;factory-&gt;createShoppingList($command-&gt;title);
+
+        // store entity
+        $this-&gt;repository-&gt;store($entity);
+    }
+}
+</code></pre>
+<p>And we are done, at least with creating Shopping List from MDD point of view. You may be like &quot;What? Wait. Our code may not be even working. And there is more in that diagram we haven't covered.&quot;</p>
+<p>I will go through more of this in the next article.</p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>12th December, 2025</em></span>
+        </div>
+            <div class="flex justify-between">
+            </div>
+    </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Site generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>

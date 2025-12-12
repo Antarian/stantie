@@ -1228,6 +1228,11 @@ video {
   padding-bottom: 3rem;
 }
 
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
 .py-8 {
   padding-top: 2rem;
   padding-bottom: 2rem;
@@ -1606,6 +1611,12 @@ video {
 .prose-headings\:text-sky-500 :is(:where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
   --tw-text-opacity: 1;
   color: rgb(14 165 233 / var(--tw-text-opacity));
+}
+
+@media not all and (min-width: 640px) {
+  .max-sm\:pt-2 {
+    padding-top: 0.5rem;
+  }
 }
 
 @media (min-width: 640px) {
