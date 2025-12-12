@@ -23,6 +23,7 @@ class MetadataFactory
         if (!$published || $published->format(self::DATE_FORMAT) !== $data['published']) {
             throw new ValidationException(sprintf('Please provide correct date in a correct format \'%s\' date provided \'%s\'', self::DATE_FORMAT, $data['published']));
         }
+        $published = $published->setTime(0, 0);
 
         $metadata = new Metadata(
             title: $data['title'],

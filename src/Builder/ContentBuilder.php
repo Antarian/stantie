@@ -85,6 +85,9 @@ final class ContentBuilder
 
         $articles = [];
         foreach ($articlesData as ['metadata' => $metadata, 'htmlContent' => $htmlContent]) {
+            if (!$metadata['published']) {
+                continue;
+            }
             $metadata = $this->metadataFactory->createFromArray($metadata);
             $seriesDetail = $metadata->seriesSlug ? $this->getSeriesList()[$metadata->seriesSlug] : null;
 

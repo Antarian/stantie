@@ -11,3 +11,7 @@ series:
     title: 'Creating a PHP mini framework'
     pretext: ''
     parts: 4
+  - slug: domain-driven-design
+    title: 'Domain Driven Design in PHP'
+    pretext: 'In this series I will try to explain basics of Model Driven Design.'
+    parts: 1

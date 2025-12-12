@@ -3,6 +3,7 @@
     "description": "Static HTML generator",
     "type": "project",
     "require-dev": {
+        "php": ">=8.4",
         "ext-dom": "*",
         "league/commonmark": "^2.4",
         "twig/twig": "^3.0",
