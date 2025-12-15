@@ -194,7 +194,65 @@ final readonly class AddShoppingListHandler
 }
 </code></pre>
 <p>And we are done, at least with creating Shopping List from MDD point of view. You may be like &quot;What? Wait. Our code may not be even working. And there is more in that diagram we haven't covered.&quot;</p>
-<p>I will go through more of this in the next article.</p>
+<p>To check if code is working, we will add Composer to the project with command</p>
+<pre><code class="language-shell">composer init
+</code></pre>
+<p>After installing composer, alter PSR-4 namespaces in
+<code>composer.json</code></p>
+<pre><code class="language-json">    &quot;autoload&quot;: {
+        &quot;psr-4&quot;: {
+            &quot;Antarian\\Ddd\\&quot;: &quot;src/&quot;,
+            &quot;Domain\\&quot;: &quot;domain/&quot;
+        }
+    },
+</code></pre>
+<p>Add <code>src/Repository/ShoppingListMemoryRepository.php</code></p>
+<pre><code class="language-php">&lt;?php
+declare(strict_types=1);
+namespace Antarian\Ddd\Repository;
+
+use Domain\Entity\ShoppingList;
+use Domain\Repository\ShoppingListRepository;
+
+class ShoppingListMemoryRepository implements ShoppingListRepository
+{
+    public array $shoppingLists = [];
+
+    public function store(ShoppingList $entity): void
+    {
+        $this-&gt;shoppingLists[] = serialize($entity);
+    }
+}
+</code></pre>
+<p>and
+<code>public/index.php</code></p>
+<pre><code class="language-php">&lt;?php
+use Antarian\Ddd\Repository\ShoppingListMemoryRepository;
+use Domain\Command\AddShoppingList;
+use Domain\CommandHandler\AddShoppingListHandler;
+use Domain\Factory\ShoppingListFactory;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$command = new AddShoppingList('My Shopping List');
+$factory = new ShoppingListFactory();
+
+$repository = new ShoppingListMemoryRepository();
+
+$commandHandler = new AddShoppingListHandler(
+    $factory,
+    $repository,
+);
+
+$commandHandler($command);
+
+var_dump($repository-&gt;shoppingLists);
+</code></pre>
+<p>You should be able to test that article was added by running index.php</p>
+<pre><code class="language-shell">php public/index.php
+</code></pre>
+<p>Code of this part is in Github <a href="https://github.com/Antarian/ddd-tutorial/tree/ddd-intro">repository</a>, branch <code>ddd-intro</code></p>
+<p>We will go through more of first diagram in future articles.</p>
 
         <div class="flex gap-6">
                                                             <span>Posted on <em>12th December, 2025</em></span>
