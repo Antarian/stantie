@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Symfony 8 Messenger | Peter Labos</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="md:space-y-6 lg:space-y-12 bg-[hsl(48,100%,98.5%)]">
+    <nav class="sm:block max-sm:pt-2 pt-4">
+        <div class="text-center">Peter Labos</div>
+        <ul class="flex justify-center items-center gap-8 mt-8">
+            <li>
+                <a href="index.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">Blog</a>
+            </li>
+            <li>
+                <a href="about-me.html" class="
+                                                block font-bold text-lg h-8
+                        hover:text-sky-500 hover:border-b-2 hover:border-sky-500
+                        focus:text-sky-500 focus:border-b-2 focus:border-sky-500
+                    ">About me</a>
+            </li>
+        </ul>
+    </nav>
+        <main class="container mx-auto px-12 py-8 prose prose-headings:text-sky-500 lg:prose-lg">
+                <div class="flex justify-between">
+                        <p><sub>Category: <a class="hover:no-underline underline-offset-4" href="category-architecture.html">Architecture</a></sub></p>        </div>
+                <h1>Symfony Messenger - in steps</h1>
+<p>When Symfony developers talk about queues in Symfony, they usualy talk about Messenger. Symfony Messenger is not a queue system, it is message handling system able to communicate with queue systems. In the case of Messenger, these are called Transports. And some Transports can internally implement queues. For example Doctrine or AMQP (RabbitMQ).</p>
+<p>This may be just semantical difference, but to me this helps to understand the role and architecture of this package.
+And also how to approach and explain its flow of work in few steps.</p>
+<ol>
+<li>
+<p><strong>message -&gt; message handler</strong></p>
+<ul>
+<li><strong>message</strong> - is plain serializable object. Think of it as DTO with scalar values, Enums or array of scalars.</li>
+<li><strong>message handler</strong> - class implementing handling logic of the message. Usually in <code>_invoke(Message $message)</code> method.</li>
+</ul>
+<p>This is the core logic of Messenger. You may better imagine it as Command (message) and CommandHandler (message handler). For example <code>AddProduct</code> is simple DTO containing product id, title, details... and then <code>AddProductHandler</code> will handle this command to execute all required actions to add product to cart.</p>
+<p>This simpe logic can be implemented even without using the Messenger package. When you are trying to prepare legacy system for Messenger, it may act as a first step.</p>
+</li>
+<li>
+<p><strong>message -&gt; message bus -&gt; message handler</strong></p>
+<ul>
+<li><strong>message bus</strong> - is using <code>dispatch(Message|Envelope $message)</code> method to dispatch message to be processed by message handler. Message is wrapped in <code>Envelope</code> object and there are added <code>Stamps</code> by middlewares in the process. We will get to these in step 3.</li>
+</ul>
+<p>Simplest form of message bus would be just to pair messages with message handlers, as key value pairs, where message FQCN is the key and message handler FQCN is the value.</p>
+<p>Messenger is bit more robust in how to detect pairing between messages and message handlers and is additionally processing messages through configured middlewares.</p>
+<ul>
+<li><strong>multiple buses</strong> - more complex applications usually use multiple buses to make quick distinction in general type of messages. Most common is division to commands, events and queries, mainly because of applied middlewares.</li>
+</ul>
+<p>command -&gt; command bus -&gt; command handler
+event -&gt; event bus -&gt; event handler
+query -&gt; query bus -&gt; query handler</p>
+<ul>
+<li><strong>bus middlewares</strong> - in the Messenger bus is collection of middlewares applied to a message, this can be for example Validation. With multiple buses this is more visible:
+<ul>
+<li>command bus - will have Validation middleware</li>
+<li>event bus - may need router_context middleware</li>
+<li>query bus - may need to strip default middlewares like failed_message_processing or dispatch_after_current_bus, to be faster in retrieving messages</li>
+</ul>
+</li>
+</ul>
+<p>You can check default collection of middlewares applied to a message in <a href="https://symfony.com/doc/current/messenger.html#middleware">documentation</a>.</p>
+</li>
+<li>
+<p><strong>message -&gt; message bus -&gt; transport (sync, async) -&gt; message bus (async) -&gt; message handler</strong></p>
+<ul>
+<li><strong>transport</strong> - by default Symfony is using Sync Transport. This means that messages will be processed immediately by handler. This can be configured very easily to one of predefined async Transports, like DB (Doctrine), Redis, AMQP... or even custom implementation. Transport can use specific <code>Stamps</code> as a guidance what to do with the message, e.g. send message to delayed or priority queue.</li>
+<li><strong>message bus (async)</strong> - Transport will usually react on added Stamps to the message, but will not store these stamps. In Messenger the message recieved from async Transport is passed back to message bus to message bus to apply middlewares and <code>Stamps</code> again.</li>
+</ul>
+<p>Which transport to use for which message is defined by Symfony <a href="https://symfony.com/doc/current/messenger.html#routing-messages-to-a-transport">message routing config</a>.</p>
+<p>You can also (bind handler to a specific Transport)[https://symfony.com/doc/current/messenger.html#binding-handlers-to-different-transports], if needed.</p>
+</li>
+</ol>
+<p><a href="https://symfony.com/doc/current/messenger.htm">Oficial docs</a></p>
+
+        <div class="flex gap-6">
+                                                            <span>Posted on <em>11th January, 2026</em></span>
+        </div>
+            </main>
+    <footer class="container mx-auto text-center pb-4">
+        <small>Site generated by <a href="https://github.com/antarian/stantie">Stantie</a></small>
+    </footer>
+</body>
+</html>
